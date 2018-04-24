@@ -15,7 +15,7 @@ class Editor(models.Model):
 
 class AdminGenre(models.Model):
     name = models.CharField(max_length=50)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
         return self.name
@@ -24,7 +24,7 @@ class AdminGenre(models.Model):
 class UserGenre(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField()
-    user = models.ForeignKey(User, blank=False, null=False)
+    user = models.ForeignKey(User)
 
     def __unicode__(self):
         return "%s (by %s)" % (self.name, self.user)
@@ -32,9 +32,13 @@ class UserGenre(models.Model):
 
 class Author(models.Model):
     name = models.CharField(max_length=50)
+    desc = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
-        return self.name
+        name = self.name.split()
+        if (len(name) >= 3):
+            return "%s %s, %s" % (name[-2], name[-1], " ".join(name[:-2]))
+        return "%s, %s" % (name[1], name[0])
 
 
 class Series(models.Model):
@@ -46,27 +50,33 @@ class Series(models.Model):
 
 class Book(models.Model):
     title = models.CharField(max_length=50)
-    pub_date = models.DateField(auto_now=False, auto_now_add=False)
-    language = models.CharField(max_length=20)
+    author = models.ForeignKey(Author)
+    editor = models.ManyToManyField(Editor, blank=True, null=True)
+    pub_date = models.DateField(auto_now=False, auto_now_add=False, blank=True,
+                                null=True)
+    language = models.CharField(max_length=20, blank=True, null=True)
 
     def __unicode__(self):
-        return self.title
+        return "%s (%s)" % (self.title, self.author)
 
 
 # Relationships
-class Part(models.Model):  # Restriction: only one series per book (not implemented)
-    book = models.ForeignKey(Book, blank=False, null=False)
-    series = models.ForeignKey(Series, blank=False, null=False)
+class Part(models.Model):
+    book = models.ForeignKey(Book)
+    series = models.ForeignKey(Series)
     number = models.IntegerField()
 
     def __unicode__(self):
         return "%s (%s #%d)" % (self.book, self.series, self.number)
 
+    class Meta:
+        unique_together = (('series', 'number'))
+
 
 class GenreScore(models.Model):
-    book = models.ForeignKey(Book, blank=False, null=False)
-    genre = models.ForeignKey(AdminGenre, blank=False, null=False)
-    # user = models.ForeignKey(User, blank=False, null=False)
+    book = models.ForeignKey(Book)
+    genre = models.ForeignKey(AdminGenre)
+    user = models.ForeignKey(User)
 
     def __unicode__(self):
-        return "%s - %s" % (self.book, self.genre)
+        return "%s - %s - %s" % (self.book, self.genre, self.user)
