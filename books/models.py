@@ -51,7 +51,7 @@ class Series(models.Model):
 class Book(models.Model):
     title = models.CharField(max_length=50)
     author = models.ForeignKey(Author)
-    editor = models.ManyToManyField(Editor, blank=True, null=True)
+    editor = models.ManyToManyField(Editor)
     pub_date = models.DateField(auto_now=False, auto_now_add=False, blank=True,
                                 null=True)
     language = models.CharField(max_length=20, blank=True, null=True)
