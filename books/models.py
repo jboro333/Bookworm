@@ -80,3 +80,19 @@ class GenreScore(models.Model):
 
     def __unicode__(self):
         return "%s - %s - %s" % (self.book, self.genre, self.user)
+
+    class Meta:
+        unique_together = (('book', 'genre', 'user'))
+
+
+class BookScore(models.Model):
+    book = models.ForeignKey(Book)
+    user = models.ForeignKey(User)
+    score = models.IntegerField()
+    text = models.TextField()
+
+    def __unicode__(self):
+        return "%s - %s (%s)" % (self.user, self.book, self.score)
+
+    class Meta:
+        unique_together = (('book', 'user'))
