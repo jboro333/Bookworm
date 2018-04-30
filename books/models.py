@@ -13,8 +13,15 @@ class Editor(models.Model):
         return self.name
 
 
-class AdminGenre(models.Model):
+class Genre(models.Model):
     name = models.CharField(max_length=50)
+
+    def __unicode__(self):
+        return self.name
+
+
+class AdminGenre(models.Model):
+    name = models.ForeignKey(Genre)
     description = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
@@ -22,7 +29,7 @@ class AdminGenre(models.Model):
 
 
 class UserGenre(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.ForeignKey(Genre)
     description = models.TextField()
     user = models.ForeignKey(User)
 
