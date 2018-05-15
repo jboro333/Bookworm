@@ -1,0 +1,51 @@
+{% extends "books/base.html" %}
+
+{% block content %}
+
+    <h2> Query results </h2>
+    <div style="padding: 0 0 0 2em">
+        {% for book in result %}
+            <div class="col" style="padding: 0 0 2em 0">
+                <div class="row">
+                    <h4> <a class="nav-link" href="/bookworm?book={{ book.id }}/"> {{ book.title }} (TODO),&nbsp; </a> </h4>
+                    <p> By {{ book.author }} </p>
+                </div>
+                <div class="row">
+                    <p> Points: {{ book.valoration }}/10 </p>
+                    <a class="nav-link" href="/bookworm/review/book={{ book.id }}/"> See reviews (DOING) </a>
+                    <a class="nav-link" href="/bookworm/add/review?book={{ book.id }}/"> Add review </a>
+                </div>
+                <h6> Genres: </h6>
+                <div class="col">
+                    {% for genre in book.best_genres %}
+                        <div class="row">
+                            <a class="nav-link" href="/bookworm/genre?{{ genre.0.id }}/"> {{ genre.0.unicode }} (TODO) </a> 
+                            <p> {{ genre.1 }} votes </p>
+                            <a class="nav-link" href="/bookworm/add/vote?book={{ book.id }}&genre={{ genre.0.id }}/"> Vote/Devote </a>
+                        </div>
+                    {% empty %}
+                        <p> No genres voted for this book. </p>
+                    {% endfor %}
+                </div>
+                <a class="nav-link" href="/bookworm/add/vote?book={{ book.id }}/"> Vote other genre (TODO) </a>
+                {% if book.editor.name or book.pub_date or book.language %}
+                    <div class="col">
+                        <p> First publication info: </p>
+                        {% if book.editor.name %}
+                            <p> &emsp; - Editor: {{ book.editor.name }}</p>
+                        {% endif %}
+                        {% if book.pub_date %}
+                            <p> &emsp; - Date: {{ book.pub_date }}</p>
+                        {% endif %}
+                        {% if book.language %}
+                            <p> &emsp; - Language: {{ book.language }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p> Your search issued no results </p>
+        {% endfor %}
+    </div>
+
+{% endblock %}
