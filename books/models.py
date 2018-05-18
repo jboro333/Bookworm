@@ -20,18 +20,15 @@ class Editor(models.Model):
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True)
     description = models.TextField()
     user = models.ForeignKey(User)
 
     def __unicode__(self):
-        return "%s (by %s)" % (self.name, self.user)
+        return "%s" % self.name
     
     def unicode(self):
-        return self.__unicode__()
-    
-    class Meta:
-        unique_together = (('name', 'user'))    
+        return self.__unicode__()  
 
 
 class Author(models.Model):
@@ -129,6 +126,7 @@ class BookScore(models.Model):
     book = models.ForeignKey(Book)
     user = models.ForeignKey(User)
     score = models.IntegerField()
+    title = models.CharField(max_length=30)
     text = models.TextField()
 
     def __unicode__(self):

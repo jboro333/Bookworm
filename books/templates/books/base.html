@@ -27,9 +27,9 @@
   </button>
   <div class="collapse navbar-collapse" id="navbarsExampleDefault">
     <ul class="navbar-nav mr-auto">
-      <li class="nav-item active">
-        <a class="nav-link">Home<span class="sr-only">(current)</span></a>
-      </li>
+        <li class="nav-item active">
+            <a class="nav-link" href="/bookworm/search/">Search<span class="sr-only">(current)</span></a>
+        </li>
     </ul>
     <ul class="navbar-nav">
         {% if user.is_authenticated %}
@@ -53,12 +53,35 @@
 <main id="content" class="container mt-3" style="padding:5em 0 0 0">
     {% block content %}
         {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-        <a class="nav-link" href="/bookworm/search/">Bookworm search </a>
         <h3> Your reviews </h3>
-        
+            {% for review in reviews %}
+                <div class="col">
+                    <div class="row">
+                        <h5> <a class="nav-link" href="/bookworm?book={{ review.book.id }}"> {{ review.book.title }} </a> </h5>
+                        <h5> {{ review.score }}/10 </h5>
+                    </div>
+                    <div style="padding: 0 0 0 1em">
+                        <h5><strong> {{ review.title }} </strong></h5>
+                        <p> {{ review.text }} </p>
+                        <a class="nav-link" href="/bookworm"> Modify review (TODO) </a>
+                        <a class="nav-link" href="/bookworm"> Remove review (TODO) </a>
+                    </div>
+                </div>
+            {% empty %}
+                <h5> You have placed no reviews </h5>
+            {% endfor %}
         <h3> Your genres </h3>
-        
         <a class="nav-link" href="/bookworm/add/genre/">Create genre</a>
+            {% for genre in genres %}
+                <div class="col">
+                    <h5> {{ genre.name }} </h5>
+                    <p style="padding: 0 0 0 1em"> {{ genre.description }} </p>
+                </div>
+            {% empty %}
+                <h5> You have created no genres. </h5>
+            {% endfor %}
+        
+        
     {% endblock %}
 </main>
 
