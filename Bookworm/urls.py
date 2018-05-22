@@ -24,5 +24,5 @@ urlpatterns = [
     url(r'^login/', login, name='login'),
     url(r'^logout/', logout, name='logout'),    
     url(r'^bookworm/', include('books.urls', namespace='bookworm')),
-    url(r'^[a-z]*', notExists)
+    # url(r'^[a-z]*', notExists)
 ]

@@ -1,0 +1,63 @@
+{% extends "books/base.html" %}
+
+{% block content %}
+    <div class="col">
+        <div class="row">
+            <h4><strong> {{ book.title }} </strong></h4>
+            {% if series %}
+                <h4> &nbsp; ({{ series.series.name }} #{{ series.number }}) </h4>
+            {% endif %}
+        </div>
+        <div class="col" style="padding: 0.5em 00 0 2em">
+            <div class="row">
+                <p> Author:&nbsp; </p>
+                <a class="nav-link" href="/bookworm/author/{{ book.author.id }}/" style="padding: 0 0 0 0"> {{ book.author.name }} </a>
+            </div>
+            {% if book.editor or book.pub_date %}
+                <div class="row">
+                    <p> First published&nbsp; </p>
+                    {% if book.editor %}
+                        <p> by {{ book.editor.name }}&nbsp; </p>
+                    {% endif %}
+                    {% if book.pub_date %}
+                        <p> on {{ book.pub_date }} </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if book.language %}
+                <div class="row">
+                    <p> First publication language: {{ book.language }} </p>
+                </div>
+            {% endif %}
+            
+            <div class="row">
+                <p><strong> Points: {{ book.valoration }}/10.0 </strong></p>
+                <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/" style="padding: 0 0 0 1em"> See reviews </a>
+                <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/add/" style="padding: 0 0 0 1em"> Add review </a>
+            </div>
+            
+            <h6 style="padding: 0 0 0 0"> Genres: </h6>
+            <div class="col">
+                {% for genre in genres %} 
+                    <div class="row">
+                        <a href="" title="{{ genre.0.description }}" style="padding: 0 0 0 1em"> {{ genre.0.unicode }} </a> 
+                        <p style="padding: 0 2em 0 2em"> {{ genre.1 }} votes&nbsp;&nbsp; </p>
+                        <form action="/bookworm/book/{{ book.id }}/vote/{{ genre.0.id }}/add/" method="post">
+                            {% csrf_token %}
+                            {% if genre.2 %}
+                                <input type="submit" value="Devote" style="background-color: #FF3A3A" />
+                            {% else %}
+                                <input type="submit" value="Vote" style="background-color: #17ED00" />
+                            {% endif %}
+                            <input type="hidden" name="next" value="{{ next }}" />
+                        </form>
+                    </div>
+                {% empty %}
+                    <p> No genres voted for this book. </p>
+                {% endfor %}
+            </div>
+            <a class="nav-link" href="/bookworm/book/{{ book.id }}/vote/" style="padding: 0 0 0 0"> Vote other genres </a>
+        </div>
+    </div>
+
+{% endblock %}

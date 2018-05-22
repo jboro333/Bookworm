@@ -20,7 +20,9 @@
 {% block header %}
 
 <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-  <a class="navbar-brand" href="/bookworm/home/">Bookworm</a>
+    {% if request.path != '/bookworm/home/' %}
+  <input type="button" value="Back" onclick="javascript:history.go(-1);" />
+    {% endif %}
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
           aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
@@ -29,6 +31,11 @@
     <ul class="navbar-nav mr-auto">
         <li class="nav-item active">
             <a class="nav-link" href="/bookworm/search/">Search<span class="sr-only">(current)</span></a>
+        </li>
+    </ul>
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+            <a class="navbar-brand" href="/bookworm/home/">Bookworm<span class="sr-only">(current)</span></a>
         </li>
     </ul>
     <ul class="navbar-nav">
@@ -57,25 +64,28 @@
             {% for review in reviews %}
                 <div class="col">
                     <div class="row">
-                        <h5> <a class="nav-link" href="/bookworm?book={{ review.book.id }}"> {{ review.book.title }} </a> </h5>
+                        <h5> <a class="nav-link" href="/bookworm/book/{{ review.book.id }}/" style="padding: 0 0 0 1em"> {{ review.book.title }} </a> </h5>
+                        <h6 style="padding: 0.25em 0 0 0"> , by </h6>
+                        <h6> <a class="nav-link" href="/bookworm/author/{{ review.book.author.id }}/" style="padding: 0.25em 0.5em 0 0.5em"> {{ review.book.author }} </a> </h6>
                         <h5> {{ review.score }}/10 </h5>
                     </div>
                     <div style="padding: 0 0 0 1em">
                         <h5><strong> {{ review.title }} </strong></h5>
                         <p> {{ review.text }} </p>
-                        <a class="nav-link" href="/bookworm"> Modify review (TODO) </a>
-                        <a class="nav-link" href="/bookworm"> Remove review (TODO) </a>
+                        <a class="nav-link" href="/bookworm/book/{{ review.book.id }}/review/{{ review.id }}/mod/" style="padding: 0 0 0 0"> Modify review </a>
+                        <a class="nav-link" href="/bookworm/book/{{ review.book.id }}/review/{{ review.id }}/del/" style="padding: 0 0 2em 0"> Remove review </a>
                     </div>
                 </div>
             {% empty %}
                 <h5> You have placed no reviews </h5>
             {% endfor %}
         <h3> Your genres </h3>
-        <a class="nav-link" href="/bookworm/add/genre/">Create genre</a>
+        <h4><a class="nav-link" href="/bookworm/genre/add/">Create genre</a></h4>
             {% for genre in genres %}
                 <div class="col">
                     <h5> {{ genre.name }} </h5>
                     <p style="padding: 0 0 0 1em"> {{ genre.description }} </p>
+                    <a class="nav-link" href="/bookworm/genre/{{ genre.id }}/del/" style="padding: 0 0 2.5em 0"> Remove genre </a>
                 </div>
             {% empty %}
                 <h5> You have created no genres. </h5>

@@ -95,7 +95,7 @@ class Book(models.Model):
             lst.remove((maxkey, maxval))
             if (lst == []):
                 return values
-        return values
+        return values  # [(genre, votes)]
 
 # Relationships
 class Part(models.Model):
@@ -107,7 +107,7 @@ class Part(models.Model):
         return "%s (%s #%d)" % (self.book, self.series, self.number)
 
     class Meta:
-        unique_together = (('series', 'number'))
+        unique_together = (('series', 'number', 'book'))
 
 
 class GenreScore(models.Model):
