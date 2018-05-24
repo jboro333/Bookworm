@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import urllib2
+import bs4
 
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponse
@@ -9,6 +11,38 @@ from models import Genre, Book, BookScore, GenreScore, Part
 from forms import SearchForm, ReviewForm
 
 
+def searchInApi(query):
+    queryString = "http://www.goodreads.com/search/index.xml?key=BkZAa7iQldcYvPHCoBZgw"  # External config file
+    baseAuthorString = "https://www.goodreads.com/author/show/"
+    if ('book' in query):
+        queryString += "&q=" + query['book']
+    if ('author' in query):
+        queryString += ""
+    if ('' in query):
+        queryString += ""
+    print queryString
+    handler = urllib2.urlopen(queryString)
+    text = handler.read()
+    handler.close()
+    soup = bs4.BeautifulSoup(text, "lxml")
+    occurrences = soup.find("search").find("results").find_all("work")
+    for event in occurrences:
+        book = event.find("best_book")
+        author = event.find("author")
+        authorString = baseAuthorString + author.find("id").text + "." + author.find("name").text
+        handler = urllib2.urlopen(authorString)
+        text = handler.read()
+        handler.close()
+        soup = bs4.BeautifulSoup(text, "lxml")
+        desc = soup.find_all('div', "aboutAuthorInfo")
+        print desc
+        text = ""
+        for span in desc:
+            text += span.text
+        print text
+        break
+    
+    
 def buildResult(found, user):
     result = {}
     for book in found:
@@ -63,14 +97,19 @@ def search(request):
             return render(request, 'books/form.html', {'form': SearchForm()})
         
         books = Book.objects.all()
+        fields = {}
         if (book != ''):
             books = books.filter(title__contains=book)
+            fields['book'] = book
         if (author != ''):
             books = books.filter(author__name__contains=author)
+            fields['author'] = author
         if (editor != ''):
             books = books.filter(editor__name__contains=editor)
+            fields['editor'] = editor
         if (series != ''):
             parts = Part.objects.filter(series__name__contains=series)
+            fields['series'] = series
             found = []
             for book in books:
                 for part in parts:
@@ -80,7 +119,7 @@ def search(request):
             found = books
             
         if (found.count() == 0):
-            # found = <API search>
+            searchInApi(fields)
         result = buildResult(found, request.user)
         
         query = ""
