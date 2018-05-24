@@ -9,7 +9,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.core.exceptions import ValidationError
 
 from models import Genre, Book, BookScore, GenreScore, Part, Author, Series
-from forms import SearchForm, ReviewForm
+from forms import SearchForm, GenreForm
 
 def getBookInfo(data):
     if ("#" in data):
@@ -18,7 +18,10 @@ def getBookInfo(data):
         # Get series and number
         if ("#" in data and "(" in data and ")" in data):
             partInfo = data.split('(')[1].rstrip(')').split("#")
-            return (title, partInfo[0].strip(), int(partInfo[1].strip()))
+            try:
+                return (title, partInfo[0].strip(), int(partInfo[1].strip()))
+            except:
+                return (None, None, None)
     return (data, None, None)
 
 
@@ -35,9 +38,13 @@ def getAuthor(author):
     handler.close()
     soup = bs4.BeautifulSoup(text, "lxml")
     desc = ""
-    for span in soup.find('div', "aboutAuthorInfo").find_all("span"):
-        desc += span.text + " "
-
+    search = soup.find('span', id="freeTextauthor" + author.find("id").text)
+    if (search is None):
+        search = soup.find('span', id="freeTextContainerauthor" + author.find("id").text)
+    for span in search.strings:
+        if ("There is more than one author in the Goodreads database with this name" in span):
+            continue
+        desc += span + "\n"
     return Author.objects.create(name=author.find("name").text, desc=desc)
     
 
@@ -74,6 +81,8 @@ def searchInApi(query):
             
         # Add book to the database
         (title, seriesName, number) = getBookInfo(book.find("title").text)
+        if (not title):
+            continue
         book = Book.objects.create(title=title, author=authorInDb)
         book.save()
         print("Added book to database: " + title)
@@ -162,13 +171,12 @@ def search(request):
                     if (book == part.book):
                         found += [book]
         else:
-            found = books
+            found = [book for book in books]
         print "Found in database:", found
             
-        if (found.count() == 0):
+        if (found == []):
             found = searchInApi(fields)
         result = buildResult(found, request.user)
-        print "Final result:", result
         query = ""
         for field in request.GET:
             query += field + "=" + request.GET[field] + "&"
@@ -262,8 +270,22 @@ def voteTopGenre(request, book_pk, genre_pk):
     return redirect(request.POST['next'])
 
 
-def voteNewGenre(request, book_id):
-    pass        
+def voteGenre(request, pk):
+    if (request.method == 'GET'):
+        form = GenreForm()
+        print request.GET
+    else:
+        form = GenreForm(request.POST)
+        if (form.is_valid() or form.errors == {'name': ['Genre with this Name already exists.']}):
+            genreName = form.cleaned_data['name']
+            genre = Genre.objects.filter(name=genreName)
+            if (genre.count() == 0):
+                raise ValidationError("Genre does not exist")
+            GenreScore.objects.create(book=Book.objects.filter(id=pk)[0], genre=genre[0], user=request.user).save()
+            return redirect(request.POST['next'])
+    genres = [genre.unicode().encode('utf8') for genre in Genre.objects.all()]
+    return render(request, 'books/form.html', {'pk': pk, 'genres': genres, 'form': form, 'next': request.GET['next']})
+            
 
 
 def seeBook(request, pk):
@@ -287,6 +309,11 @@ def seeReviews(request, pk):
     reviews = BookScore.objects.filter(book__id=pk)
     book = Book.objects.filter(id=pk)[0]
     return render(request, 'books/reviews.html', {'book': book, 'reviews':[review for review in reviews]})
+
+
+def seeAuthor(request, pk):
+    author = Author.objects.filter(id=pk)[0]
+    return render(request, 'books/author.html', {'author': author})
 
 
 def notExists(request):

@@ -2,17 +2,25 @@
 {% load staticfiles %}
 {% load crispy_forms_tags %}
 
-{% block content %}
-
-    <form method="post" enctype="multipart/form-data" action="">
+{% block content %}    
+    <form method="post" enctype="multipart/form-data" action="" value={{ next }}>
         {% csrf_token %}
         {{ form|crispy }}
         <div class="form-group" style="padding: 1em 0 0 0">
             <button type="submit" class="btn btn-success" value="{{request.path}}">Submit</button>
+            <input type="hidden" name="next" value="{{ next }}" />
             <a class="btn btn-danger" href="{{ request.META.HTTP_REFERER }}">Cancel</a>
         </div>
     </form>
-
-    <script src="{% static "js/autocomplete.js" %}"></script>
+    <script>
+        $(function() {
+            var genres = {{ genres|safe }};
+            console.log(genres[0]);
+            $( "#id_name" ).autocomplete({
+                source: genres,
+                minLength: 1
+            });
+        });
+    </script>
 
 {% endblock %}

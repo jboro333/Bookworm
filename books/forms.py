@@ -1,5 +1,5 @@
 from django import forms
-from models import BookScore
+from models import Genre
 
 class SearchForm(forms.Form):
     title = forms.CharField(max_length=50, required=False)
@@ -7,11 +7,16 @@ class SearchForm(forms.Form):
     series = forms.CharField(max_length=50, required=False)
     editor = forms.CharField(max_length=50, required=False)
     
-class ReviewForm(forms.ModelForm):
+class GenreForm(forms.Form):
+    name = forms.CharField(label='Genre', max_length=50)
     
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if (Genre.objects.filter(name=name).count() == 0):
+            raise forms.ValidationError('Genre does not exist')
+        return name
+
     class Meta:
-        model = BookScore
-        fields = ['title', 'score', 'text']
         template_name = "books/form.html"
     
     

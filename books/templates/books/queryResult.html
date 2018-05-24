@@ -7,10 +7,11 @@
         {% for book, votes in result.items %}
             <div class="col" style="padding: 0 0 2em 0">
                 <div class="row">
-                    <h4> <a class="nav-link" href="/bookworm/book/{{ book.id }}/" style="padding: 0 0 0 0"> {{ book.title }},&nbsp; </a> </h4>
+                    <h4> <a class="nav-link" href="/bookworm/book/{{ book.id }}/" style="padding: 0 0 0 0"> {{ book.title }} </a></h4>
+                    <h4>,</h4>
                     <div class="row">
-                        <p style="padding: 0.3em 0 0 1em"> By </p>
-                        <a class="nav-link" href="/bookworm/author/{{ book.author.id }}/" style="padding: 0.3em 0 0 0.5em"> {{ book.author }} (TODO) </a>
+                        <p style="padding: 0.3em 0 0 1.5em"> By </p>
+                        <a class="nav-link" href="/bookworm/author/{{ book.author.id }}/" style="padding: 0.3em 0 0 0.5em"> {{ book.author }} </a>
                     </div>
                 </div>
                 {% if votes.1 %}
@@ -21,7 +22,7 @@
                 <div class="row">
                     <p> Points: {{ book.valoration }}/10.0 </p>
                     <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/" style="padding: 0 0 0 1em"> See reviews </a>
-                    <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/add/" style="padding: 0 0 0 1em" name="next" value={{ next }}> Add review </a>
+                    <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/add/" style="padding: 0 0 0 1em"> Add review </a>
                 </div>
                 <h6> Genres: </h6>
                 <div class="col">
@@ -43,7 +44,7 @@
                         <p> No genres voted for this book. </p>
                     {% endfor %}
                 </div>
-                <a class="nav-link" href="/bookworm/add/vote?book={{ book.id }}/"> Vote other genres (TODO) </a>
+                <a class="nav-link" href="/bookworm/book/{{ book.id }}/vote/add/?next={{ next }}"> Vote other genres </a>
                 {% if book.editor.name or book.pub_date or book.language %}
                     <div class="col">
                         <p> First publication info: </p>

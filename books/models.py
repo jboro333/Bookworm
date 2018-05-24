@@ -25,7 +25,7 @@ class Genre(models.Model):
     user = models.ForeignKey(User)
 
     def __unicode__(self):
-        return "%s" % self.name
+        return self.name
     
     def unicode(self):
         return self.__unicode__()  
