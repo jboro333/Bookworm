@@ -6,41 +6,87 @@ import bs4
 from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponse
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.core.exceptions import ValidationError
 
-from models import Genre, Book, BookScore, GenreScore, Part
+from models import Genre, Book, BookScore, GenreScore, Part, Author, Series
 from forms import SearchForm, ReviewForm
 
+def getBookInfo(data):
+    if ("#" in data):
+        title = data.split('(')[0].rstrip()
+    
+        # Get series and number
+        if ("#" in data and "(" in data and ")" in data):
+            partInfo = data.split('(')[1].rstrip(')').split("#")
+            return (title, partInfo[0].strip(), int(partInfo[1].strip()))
+    return (data, None, None)
+
+
+def getAuthor(author):
+    name = author.find("name").text
+    query = ""
+    for letter in name:
+        if (letter.isalpha() or letter == " "):
+            query += letter
+    # Webscrap
+    authorString = "https://www.goodreads.com/author/show/%s.%s" % (author.find("id").text, query)
+    handler = urllib2.urlopen(authorString)
+    text = handler.read()
+    handler.close()
+    soup = bs4.BeautifulSoup(text, "lxml")
+    desc = ""
+    for span in soup.find('div', "aboutAuthorInfo").find_all("span"):
+        desc += span.text + " "
+
+    return Author.objects.create(name=author.find("name").text, desc=desc)
+    
 
 def searchInApi(query):
-    queryString = "http://www.goodreads.com/search/index.xml?key=BkZAa7iQldcYvPHCoBZgw"  # External config file
-    baseAuthorString = "https://www.goodreads.com/author/show/"
+    queryString = "http://www.goodreads.com/search/index.xml?key=BkZAa7iQldcYvPHCoBZgw&q="  # External config file
+    # Create query string
     if ('book' in query):
-        queryString += "&q=" + query['book']
+        queryString += query['book']
     if ('author' in query):
-        queryString += ""
+        queryString += query['author']
     if ('' in query):
-        queryString += ""
-    print queryString
+        queryString += query['']
+    queryString = "%20".join(queryString.split())
+
+    # Search books in API
     handler = urllib2.urlopen(queryString)
     text = handler.read()
     handler.close()
     soup = bs4.BeautifulSoup(text, "lxml")
     occurrences = soup.find("search").find("results").find_all("work")
+    
+    # Add best results
+    books = []
     for event in occurrences:
         book = event.find("best_book")
         author = event.find("author")
-        authorString = baseAuthorString + author.find("id").text + "." + author.find("name").text
-        handler = urllib2.urlopen(authorString)
-        text = handler.read()
-        handler.close()
-        soup = bs4.BeautifulSoup(text, "lxml")
-        desc = soup.find_all('div', "aboutAuthorInfo")
-        print desc
-        text = ""
-        for span in desc:
-            text += span.text
-        print text
-        break
+        authorInDb = Author.objects.filter(name=author.find("name").text)
+        if (authorInDb.count() == 0):
+            authorInDb = getAuthor(author)
+            authorInDb.save()
+            print("Created new author: " + author.find("name").text)
+        else:
+            authorInDb = authorInDb[0]
+            
+        # Add book to the database
+        (title, seriesName, number) = getBookInfo(book.find("title").text)
+        book = Book.objects.create(title=title, author=authorInDb)
+        book.save()
+        print("Added book to database: " + title)
+        books.append(book)
+        
+        if (seriesName):
+            series = Series.objects.filter(name=seriesName)
+            # Add series if it doesn't exist
+            if (series.count() == 0):
+                series = [Series.objects.create(name=seriesName)]
+                series[0].save()
+            Part.objects.create(book=book, series=series[0], number=number).save()
+    return books
     
     
 def buildResult(found, user):
@@ -59,7 +105,7 @@ def buildResult(found, user):
         for genre in genres:
             query = GenreScore.objects.filter(user=user, book=book, genre=genre[0])
             bookGenres += [(genre[1], genre[0], query.count() != 0)]
-            result[book] = (bookGenres, series)
+        result[book] = (bookGenres, series)
     return result
 
 
@@ -117,11 +163,12 @@ def search(request):
                         found += [book]
         else:
             found = books
+        print "Found in database:", found
             
         if (found.count() == 0):
-            searchInApi(fields)
+            found = searchInApi(fields)
         result = buildResult(found, request.user)
-        
+        print "Final result:", result
         query = ""
         for field in request.GET:
             query += field + "=" + request.GET[field] + "&"
@@ -161,9 +208,16 @@ class CreateReview(CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         form.instance.book = Book.objects.filter(id=self.kwargs['pk'])[0]
+        mark = form.cleaned_data['score']
+        try:
+            mark = int(mark)
+        except:
+            raise ValidationError("Score has to be between 0 and 10")
+        if (mark < 0 or mark > 10):
+            raise ValidationError("Score has to be between 0 and 10")
         return super(CreateView, self).form_valid(form)
-
-
+            
+            
 class ModifyReview(UpdateView):
     model = BookScore
     success_url = "/bookworm/home/"  # Previous url
@@ -175,6 +229,16 @@ class ModifyReview(UpdateView):
         if (instance.user != self.request.user):
             raise Http404
         return instance
+    
+    def form_valid(self, form):
+        mark = form.cleaned_data['score']
+        try:
+            mark = int(mark)
+        except:
+            raise ValidationError("Score has to be between 0 and 10")
+        if (mark < 0 or mark > 10):
+            raise ValidationError("Score has to be between 0 and 10")
+        return super(UpdateView, self).form_valid(form)    
 
 
 class DeleteReview(DeleteView):
