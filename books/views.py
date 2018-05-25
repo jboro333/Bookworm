@@ -7,9 +7,26 @@ from django.shortcuts import render, redirect
 from django.http import Http404, HttpResponse
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.core.exceptions import ValidationError
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 
 from models import Genre, Book, BookScore, GenreScore, Part, Author, Series
 from forms import SearchForm, GenreForm
+
+class LoginRequiredMixin(object):
+    @method_decorator(login_required())
+    def dispatch(self, *args, **kwargs):
+        return super(LoginRequiredMixin, self).dispatch(*args, **kwargs)
+
+class CheckIsOwnerMixin(object):
+    def get_object(self, *args, **kwargs):
+        obj = super(CheckIsOwnerMixin, self).get_object(*args, **kwargs)
+        if not obj.user == self.request.user:
+            raise PermissionDenied
+        return obj
+
+class PermissionMixin(LoginRequiredMixin, CheckIsOwnerMixin):
+    template_name = '/books/forms.html'
 
 def getBookInfo(data):
     if ("#" in data):
@@ -49,7 +66,7 @@ def getAuthor(author):
     
 
 def searchInApi(query):
-    queryString = "http://www.goodreads.com/search/index.xml?key=BkZAa7iQldcYvPHCoBZgw&q="  # External config file
+    queryString = "http://www.goodreads.com/search/index.xml?key=" + API_KEY + "&q="
     # Create query string
     if ('book' in query):
         queryString += query['book']
@@ -111,9 +128,12 @@ def buildResult(found, user):
         # Get genres
         genres = book.best_genres()
         bookGenres = []
-        for genre in genres:
-            query = GenreScore.objects.filter(user=user, book=book, genre=genre[0])
-            bookGenres += [(genre[1], genre[0], query.count() != 0)]
+        if (user.is_anonymous):
+            bookGenres += [(genre[1], genre[0], False) for genre in genres]
+        else:
+            for genre in genres:
+                query = GenreScore.objects.filter(user=user, book=book, genre=genre[0])
+                bookGenres += [(genre[1], genre[0], query.count() != 0)]
         result[book] = (bookGenres, series)
     return result
 
@@ -121,7 +141,7 @@ def buildResult(found, user):
 # Create your views here.
 def home(request):
     if (request.user.is_anonymous):
-        return redirect('/login/')
+        return render(request, 'books/base.html')
     reviews = BookScore.objects.filter(user=request.user)
     genres = Genre.objects.filter(user=request.user)
     return render(request, 'books/base.html', {'reviews': reviews, 'genres': genres, 'next': '/bookworm/home/'})
@@ -184,7 +204,7 @@ def search(request):
         return render(request, 'books/queryResult.html', {'result': result, 'next': '/bookworm/search?' + query})
     
 
-class CreateGenre(CreateView):
+class CreateGenre(CreateView, LoginRequiredMixin):
     model = Genre
     fields = ['name', 'description']
     template_name = "books/form.html"
@@ -195,7 +215,8 @@ class CreateGenre(CreateView):
         return super(CreateGenre, self).form_valid(form)
 
 
-class DeleteGenre(DeleteView):
+
+class DeleteGenre(DeleteView, LoginRequiredMixin):
     model = Genre
     success_url = "/bookworm/home/"
     template_name = "books/confirmation.html"
@@ -207,7 +228,8 @@ class DeleteGenre(DeleteView):
         return instance
 
 
-class CreateReview(CreateView):
+
+class CreateReview(CreateView, LoginRequiredMixin):
     model = BookScore
     fields = ['title', 'score', 'text']
     template_name = "books/form.html"  # Previous url
@@ -226,9 +248,10 @@ class CreateReview(CreateView):
         return super(CreateView, self).form_valid(form)
             
             
-class ModifyReview(UpdateView):
+
+class ModifyReview(UpdateView, LoginRequiredMixin):
     model = BookScore
-    success_url = "/bookworm/home/"  # Previous url
+    success_url = "/bookworm/home/"
     template_name = "books/form.html"
     fields = ['title', 'score', 'text']
     
@@ -249,7 +272,7 @@ class ModifyReview(UpdateView):
         return super(UpdateView, self).form_valid(form)    
 
 
-class DeleteReview(DeleteView):
+class DeleteReview(DeleteView, LoginRequiredMixin):
     model = BookScore
     success_url = "/bookworm/home/"
     template_name = "books/confirmation.html"
@@ -261,27 +284,29 @@ class DeleteReview(DeleteView):
         return instance
 
 
+@login_required
 def voteTopGenre(request, book_pk, genre_pk):
-    book = Book.objects.filter(id=book_pk)[0]
-    genre = Genre.objects.filter(id=genre_pk)[0]    
-    vote, created = GenreScore.objects.get_or_create(book=book, user=request.user, genre=genre)
+    book = Book.objects.filter(id=book_pk)
+    genre = Genre.objects.filter(id=genre_pk)
+    if (book.count() == 0 or genre.count() == 0):
+        return notExists(request)
+    vote, created = GenreScore.objects.get_or_create(book=book[0], user=request.user, genre=genre[0])
     if (not created):
         vote.delete()
     return redirect(request.POST['next'])
 
 
+@login_required
 def voteGenre(request, pk):
+    if (Book.objects.filter(id=pk).count() == 0):
+        return notExists(request)
     if (request.method == 'GET'):
         form = GenreForm()
-        print request.GET
     else:
         form = GenreForm(request.POST)
-        if (form.is_valid() or form.errors == {'name': ['Genre with this Name already exists.']}):
+        if (form.is_valid()):
             genreName = form.cleaned_data['name']
-            genre = Genre.objects.filter(name=genreName)
-            if (genre.count() == 0):
-                raise ValidationError("Genre does not exist")
-            GenreScore.objects.create(book=Book.objects.filter(id=pk)[0], genre=genre[0], user=request.user).save()
+            GenreScore.objects.create(book=Book.objects.filter(id=pk)[0], genre=Genre.objects.filter(name=genreName)[0], user=request.user).save()
             return redirect(request.POST['next'])
     genres = [genre.unicode().encode('utf8') for genre in Genre.objects.all()]
     return render(request, 'books/form.html', {'pk': pk, 'genres': genres, 'form': form, 'next': request.GET['next']})
@@ -289,30 +314,36 @@ def voteGenre(request, pk):
 
 
 def seeBook(request, pk):
-    book = Book.objects.filter(id=pk)[0]
+    book = Book.objects.filter(id=pk)
+    if (book.count() == 0):
+        return notExists(request)
     series = Part.objects.filter(book__id=pk)
     if (series.count() == 0):
         series = None
     else:
         series = series[0]
     
-    genreQuery = book.best_genres()
+    genreQuery = book[0].best_genres()
     genres = []
     for genre, votes in genreQuery:
-        vote = GenreScore.objects.filter(genre=genre, book=book, user=request.user)
+        vote = GenreScore.objects.filter(genre=genre, book=book[0], user=request.user)
         genres += [(genre, votes, vote.count() != 0)]
         
-    return render(request, 'books/book.html', {'book': book, 'series': series, 'genres': genres})
+    return render(request, 'books/book.html', {'book': book[0], 'series': series, 'genres': genres})
 
 
 def seeReviews(request, pk):
-    reviews = BookScore.objects.filter(book__id=pk)
-    book = Book.objects.filter(id=pk)[0]
-    return render(request, 'books/reviews.html', {'book': book, 'reviews':[review for review in reviews]})
+    book = Book.objects.filter(id=pk)
+    if (book.count() == 0):
+        return notExists(request)
+    reviews = BookScore.objects.filter(book=book[0])
+    return render(request, 'books/reviews.html', {'book': book[0], 'reviews':[review for review in reviews]})
 
 
 def seeAuthor(request, pk):
-    author = Author.objects.filter(id=pk)[0]
+    author = Author.objects.filter(id=pk)
+    if (author.count() == 0):
+        return notExists(request)
     return render(request, 'books/author.html', {'author': author})
 
 

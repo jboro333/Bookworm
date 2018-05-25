@@ -22,7 +22,9 @@
                 <div class="row">
                     <p> Points: {{ book.valoration }}/10.0 </p>
                     <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/" style="padding: 0 0 0 1em"> See reviews </a>
-                    <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/add/" style="padding: 0 0 0 1em"> Add review </a>
+                    {% if user.is_authenticated %}    
+                        <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/add/" style="padding: 0 0 0 1em"> Add review </a>
+                    {% endif %}
                 </div>
                 <h6> Genres: </h6>
                 <div class="col">
@@ -30,21 +32,25 @@
                         <div class="row">
                             <a href="" title="{{ genre.1.description }}" style="padding: 0 0 0 1em"> {{ genre.1.unicode }} </a> 
                             <p style="padding: 0 2em 0 2em"> {{ genre.0 }} votes&nbsp;&nbsp; </p>
-                            <form action="/bookworm/book/{{ book.id }}/vote/{{ genre.1.id }}/add/" method="post" value="{{ next }}">
-                                {% csrf_token %}
-                                {% if genre.2 %}
-                                    <input type="submit" value="Devote" style="background-color: #FF3A3A" />
-                                {% else %}
-                                    <input type="submit" value="Vote" style="background-color: #17ED00" />
-                                {% endif %}
-                                <input type="hidden" name="next" value="{{ next }}" />
-                            </form>
+                            {% if user.is_authenticated %}
+                                <form action="/bookworm/book/{{ book.id }}/vote/{{ genre.1.id }}/add/" method="post" value="{{ next }}">
+                                    {% csrf_token %}
+                                    {% if genre.2 %}
+                                        <input type="submit" value="Devote" style="background-color: #FF3A3A" />
+                                    {% else %}
+                                        <input type="submit" value="Vote" style="background-color: #17ED00" />
+                                    {% endif %}
+                                    <input type="hidden" name="next" value="{{ next }}" />
+                                </form>
+                            {% endif %}
                         </div>
                     {% empty %}
                         <p> No genres voted for this book. </p>
                     {% endfor %}
                 </div>
-                <a class="nav-link" href="/bookworm/book/{{ book.id }}/vote/add/?next={{ next }}"> Vote other genres </a>
+                {% if user.is_authenticated %}
+                    <a class="nav-link" href="/bookworm/book/{{ book.id }}/vote/add/?next={{ next }}"> Vote other genres </a>
+                {% endif %}
                 {% if book.editor.name or book.pub_date or book.language %}
                     <div class="col">
                         <p> First publication info: </p>

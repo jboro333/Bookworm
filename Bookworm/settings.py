@@ -101,6 +101,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGIN_URL = '/login/'
+
+API_KEY = "BkZAa7iQldcYvPHCoBZgw"
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
