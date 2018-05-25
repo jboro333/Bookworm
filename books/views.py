@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 
 from models import Genre, Book, BookScore, GenreScore, Part, Author, Series
 from forms import SearchForm, GenreForm
+from Bookworm.settings import API_KEY
 
 class LoginRequiredMixin(object):
     @method_decorator(login_required())

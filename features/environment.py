@@ -33,4 +33,4 @@ def after_scenario(context, scenario):
 def after_all(context):
     context.test_runner.teardown_test_environment()
     context.browser.quit()
-context.browser = None
+    context.browser = None

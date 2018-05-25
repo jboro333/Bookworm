@@ -7,11 +7,9 @@ Feature: Create genre
 Background: There is a registered user
     Given Exists a user "testuser" with password "testpassword"
 
-Scenario: Register just restaurant name
+Scenario: Create genre
     Given I login as user "testuser" with password "testpassword"
     When I create genre
       | name        |
       | Genre12345  |
-    Then There is 1 genre in my genre list
-      | name        |
-      | The Tavern  |
+    Then There are 1 genres in my genre list
