@@ -42,7 +42,7 @@
                     <div class="row">
                         <a href="" title="{{ genre.0.description }}" style="padding: 0 0 0 1em"> {{ genre.0.unicode }} </a> 
                         <p style="padding: 0 2em 0 2em"> {{ genre.1 }} votes&nbsp;&nbsp; </p>
-                        <form action="/bookworm/book/{{ book.id }}/vote/{{ genre.0.id }}/add/" method="post">
+                        <form action="/bookworm/book/{{ book.id }}/vote/{{ genre.0.id }}/" method="post">
                             {% csrf_token %}
                             {% if genre.2 %}
                                 <input type="submit" value="Devote" style="background-color: #FF3A3A" />
@@ -56,7 +56,7 @@
                     <p> No genres voted for this book. </p>
                 {% endfor %}
             </div>
-            <a class="nav-link" href="/bookworm/book/{{ book.id }}/vote/add/" style="padding: 0 0 0 0"> Vote other genres </a>
+            <a class="nav-link" href="/bookworm/book/{{ book.id }}/vote/add/" style="padding: 0 0 0 0"> Vote/Devote other genres </a>
         </div>
     </div>
 

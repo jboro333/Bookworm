@@ -307,7 +307,9 @@ def voteGenre(request, pk):
         form = GenreForm(request.POST)
         if (form.is_valid()):
             genreName = form.cleaned_data['name']
-            GenreScore.objects.create(book=Book.objects.filter(id=pk)[0], genre=Genre.objects.filter(name=genreName)[0], user=request.user).save()
+            obj, created = GenreScore.objects.get_or_create(book=Book.objects.filter(id=pk)[0], genre=Genre.objects.filter(name=genreName)[0], user=request.user)
+            if (not created):
+                obj.delete()
             return redirect(request.POST['next'])
     genres = [genre.unicode().encode('utf8') for genre in Genre.objects.all()]
     return render(request, 'books/form.html', {'pk': pk, 'genres': genres, 'form': form, 'next': request.GET['next']})
