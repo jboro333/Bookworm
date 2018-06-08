@@ -1,0 +1,15 @@
+{% extends "books/base.html" %}
+
+{% block content %}
+    <div class="col">
+        <p> Are you sure you want to delete {{ object }}? </p>
+        <form action="{{ request.path }}" method="post">
+            {% csrf_token %}
+            <div style="row" style="padding: 1em 0 0 0">
+                <button type="submit" class="btn btn-success"  style="background-color: #17ED00"> Yes, I'm sure </button>
+                <a class="btn btn-danger" href="{{ request.META.HTTP_REFERER }}"> No </a>
+            </div>
+        </form>
+    </div>
+
+{% endblock %}

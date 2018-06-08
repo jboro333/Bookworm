@@ -1,0 +1,119 @@
+{% load staticfiles %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="{% static "style/base.css" %}" />
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="http://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+            integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+            
+    <title>{% block title %}Bookworm{% endblock %}</title>
+</head>
+
+<body>
+
+{% block header %}
+
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+    {% if request.path != '/bookworm/home/' %}
+  <input type="button" value="Back" onclick="javascript:history.go(-1);" />
+    {% endif %}
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+          aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+            <a class="nav-link" href="/bookworm/search/">Search<span class="sr-only">(current)</span></a>
+        </li>
+    </ul>
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+            <a class="navbar-brand" href="/bookworm/home/">Bookworm<span class="sr-only">(current)</span></a>
+        </li>
+    </ul>
+    <ul class="navbar-nav">
+        {% if user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link" href="#">{{ user.username }}</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'logout' %}?next={{request.path}}">Logout</a>
+            </li>
+        {% else %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'login' %}?next={{request.path}}">Login</a>
+            </li>
+        {% endif %}
+    </ul>
+  </div>
+</nav>
+
+{% endblock %}
+
+<main id="content" class="container mt-3" style="padding:5em 0 0 0">
+    {% block content %}
+        {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+        <h3> Your reviews </h3>
+            {% if user.is_authenticated %}
+                {% for review in reviews %}
+                    <div class="col">
+                        <div class="row">
+                            <h5> <a class="nav-link" href="/bookworm/book/{{ review.book.id }}/" style="padding: 0 0 0 1em"> {{ review.book.title }} </a> </h5>
+                            <h6 style="padding: 0.25em 0 0 0"> , by </h6>
+                            <h6> <a class="nav-link" href="/bookworm/author/{{ review.book.author.id }}/" style="padding: 0.25em 0.5em 0 0.5em"> {{ review.book.author }} </a> </h6>
+                            <h5> {{ review.score }}/10 </h5>
+                        </div>
+                        <div style="padding: 0 0 0 1em">
+                            <h5><strong> {{ review.title }} </strong></h5>
+                            <p> {{ review.text }} </p>
+                            <a class="nav-link" href="/bookworm/book/{{ review.book.id }}/review/{{ review.id }}/mod/" style="padding: 0 0 0 0"> Modify review </a>
+                            <a class="nav-link" href="/bookworm/book/{{ review.book.id }}/review/{{ review.id }}/del/" style="padding: 0 0 2em 0"> Remove review </a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <h5> You have placed no reviews </h5>
+                {% endfor %}
+            {% else %}
+                <h5> You have to be logged in to see this. </h5>
+            {% endif %}
+        <h3> Your genres </h3>
+            {% if user.is_authenticated %}
+                <h4><a class="nav-link" href="/bookworm/genre/add/">Create genre</a></h4>
+                {% for genre in genres %}
+                    <div class="col">
+                        <h5> {{ genre.name }} </h5>
+                        <p style="padding: 0 0 0 1em"> {{ genre.description }} </p>
+                        <a class="nav-link" href="/bookworm/genre/{{ genre.id }}/del/" style="padding: 0 0 2.5em 0"> Remove genre </a>
+                    </div>
+                {% empty %}
+                    <h5> You have created no genres. </h5>
+                {% endfor %}
+            {% else %}
+                <h5> You have to be logged in to see this. </h5>
+            {% endif %}
+        
+        
+    {% endblock %}
+</main>
+
+<div id="footer" class="footer">
+    {% block footer %}
+        
+    {% endblock %}
+</div>
+
+<!-- Bootstrap JavaScripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{% extends "books/base.html" %}
+
+{% block content %}
+    <div class="col">
+        <h2> Reviews for: </h2>
+        <div class="row"> 
+            <h2><strong><a class="nav-link" href="/bookworm/book?book={{ book.id }}" style="padding: 0 0 0 2em"> {{ book.title }}, </a> </strong></h2>
+            <h4 style="padding: 0.3em 0 0 0.5em"> by </h4>
+            <h4><a class="nav-link" href="/bookworm/author?author={{ book.author.id }}" style="padding: 0.3em 0 0 0.4em"> {{ book.author }} </a></h4>
+        </div>
+        
+        <h3 style="padding: 0 0 0 1.8em"> Average: {{ book.valoration }}/10 </h3>
+        
+        <div style="padding: 0 0 0 5em">
+            {% for review in reviews %}
+                <div class="row" style="padding: 0 0 0 0">
+                    <h5> {{ review.title }}, &nbsp; {{ review.score }}/10</h5>
+                </div>
+                <h6 style="padding: 0 0 0 0.5em"> By {{ review.user.username }} </h6>
+                <p style="padding: 0 0 1em 0.5em"> {{ review.text }} </p>
+            {% empty %}
+                <h5> No reviews for this book. </h5>
+            {% endfor %}
+        </div>
+            
+        
+    </div>
+
+{% endblock %}
