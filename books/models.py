@@ -68,9 +68,9 @@ class Book(models.Model):
         for point in points:
             count += point.score
         if (points.count() != 0):
-            return count / float(points.count())
+            return (count / float(points.count()), 1 + points.count())
         else:
-            return 5.0
+            return (5.0, 1)
     
     def best_genres(self):
         genres = GenreScore.objects.filter(book=self)
