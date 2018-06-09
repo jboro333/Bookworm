@@ -20,7 +20,7 @@
                     </div>
                 {% endif %}
                 <div class="row">
-                    <p> Points: {{ book.valoration }}/10.0 </p>
+                    <p> Points: {{ book.valoration.0 }}/10.0 ({{ book.valoration.1 }} reviews)</p>
                     <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/" style="padding: 0 0 0 1em"> See reviews </a>
                     {% if user.is_authenticated %}    
                         <a class="nav-link" href="/bookworm/book/{{ book.id }}/review/add/" style="padding: 0 0 0 1em"> Add review </a>

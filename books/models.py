@@ -68,7 +68,7 @@ class Book(models.Model):
         for point in points:
             count += point.score
         if (points.count() != 0):
-            return (count / float(points.count()), 1 + points.count())
+            return (count / float(points.count()), points.count())
         else:
             return (5.0, 1)
     
